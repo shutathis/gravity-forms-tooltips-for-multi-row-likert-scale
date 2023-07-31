@@ -14,34 +14,88 @@ window.onload = (function(onload, $) {
 		var _gsurveyLikertRow = window.gsurveyLikertRow;
 		var _gsurveyLikertUpdateRowsObject = window.gsurveyLikertUpdateRowsObject;
 
+		function combineRawTextAndToolTip(raw = '', tooltip = '') {
+			if ( typeof combineRawTextAndToolTip.counter == 'undefined' ) {
+	        combineRawTextAndToolTip.counter = 0;
+	    }
+
+	    if ('' == tooltip ) {
+	    	return raw;
+	    }
+			
+			var id = `gftt-tooltip-${combineRawTextAndToolTip.counter}${Date.now()}${Math.floor(Math.random()*100)}`;
+			var icon = `<i id='${id}' class='gftt-icon gform-theme__no-reset--el' tabindex='0' data-placement='nw-alt'></i>`;
+			var text = `<span class='gftt-content' id='${id}-wrap' role='tooltip' aria-hidden='false'><span id='${id}-content' data-tid='${id}' aria-hidden='false'>${tooltip}</span></span>`;
+			
+			combineRawTextAndToolTip.counter++;
+			return `${raw}${icon}${text}`;
+			
+		}
+
 		window.gsurveyLikertGetRows = function(field) {
 			var old_html_string = _gsurveyLikertGetRows(field);
+			
+			var defaultTexts = [
+				'First row',				
+				'Second row',					
+				'Third row',					
+				'Fourth row',					
+				'Fifth row'
+			];
+
 			var new_dom	= $(old_html_string).each(function(index, element){
-				$(element).append(`<textarea id="tooltip-${index}" class="gform-input gf-tooltips-choice-content-for-likert-rows" placeholder="Tooltip Content" onkeyup="gsurveyLikertUpdateRowsObject(); gsurveyLikertUpdatePreview();">${field.gsurveyLikertRows[ index ].tooltip}</textarea>`);
+				var defaultText = field.gsurveyLikertRows[ index ].text;
+				    defaultText = ('undefined' === typeof defaultText) ? defaultTexts[ index ] : defaultText;
+
+				var raw      = field.gsurveyLikertRows[ index ].raw;
+				    raw      = ('undefined' === typeof raw) ? defaultText : raw;
+
+				console.log(field, defaultText, field.gsurveyLikertRows[ index ].raw);
+				
+				var tooltip  = field.gsurveyLikertRows[ index ].tooltip;
+				    tooltip  = ('undefined' === typeof tooltip) ? '' : tooltip;
+
+				if ( '' !== tooltip ) {
+					field.gftt_choicesEnabled = 2; // Hack to force the plugin to load CSS styles for the tooltip.
+				}
+				
+				var combined = combineRawTextAndToolTip(raw, tooltip);
+
+				var $tooltip   = `<textarea id="tooltip-${index}" class="gform-input gf-tooltips-choice-content-for-likert-rows" placeholder="Tooltip Content" onkeyup="gsurveyLikertUpdateRowsObject(); gsurveyLikertUpdatePreview();">${tooltip}</textarea>`;
+				var $combined  = `<input type='hidden' id='gsurvey-likert-row-hidden-${index}' value="${combined}"  class='gsurvey-row-input gsurvey-likert-row-hidden field-choice-hidden field-choice-hidden--likert' onchange="gsurveyLikertUpdateRowsObject(); gsurveyLikertUpdatePreview();" />`;
+				var $raw       = `<input type='text' id='gsurvey-likert-row-text-${index}' value="${raw}"  class='gsurvey-row-input gsurvey-likert-row-text field-choice-text field-choice-text--likert' onkeyup="gsurveyLikertUpdateRowsObject(); gsurveyLikertUpdatePreview();" />`;
+
+				$(element)
+					.append($combined)
+					.append($tooltip)
+					.find('input[type="text"]').replaceWith($raw);
 			});
 		 	return $('<div>').append(new_dom).html();
 		}
 
-		window.gsurveyLikertRow = function(text, value, tooltip = '') {
+		window.gsurveyLikertRow = function(text, value, tooltip = '', raw = undefined) {
 			this.tooltip = tooltip;
+			this.raw = raw;
 
     	_gsurveyLikertRow.call(this, text, value);
 		}
 
 		window.gsurveyLikertUpdateRowsObject = function() {
 	    var field = GetSelectedField();
-	    console.log('hello wolrd');
 	    $('#gsurvey-likert-rows li').each(function (index) {
-	        var gsurveyLikertRowText = $(this).children('input.gsurvey-likert-row-text').val();
-	        var gsurveyLikertRowVal = $(this).children('input.gsurvey-likert-row-id').val();
-	        var gsurveyLikertRowTooltip = $(this).children('textarea.gf-tooltips-choice-content-for-likert-rows').val();
+	        var value = $(this).children('input.gsurvey-likert-row-id').val();
+	        var tooltip = $(this).children('textarea.gf-tooltips-choice-content-for-likert-rows').val();
+	        var raw = $(this).children('input.gsurvey-likert-row-text').val();
+	        var combined = combineRawTextAndToolTip(raw, tooltip, index);	        
 
-	        console.log('gsurveyLikertRowText', gsurveyLikertRowText, 'gsurveyLikertUpdateRowsObject', gsurveyLikertRowTooltip);
 	        var i = $(this).data("index");
-	        var g = new window.gsurveyLikertRow(gsurveyLikertRowText, gsurveyLikertRowVal, gsurveyLikertRowTooltip);
+	        var g = new window.gsurveyLikertRow(combined, value, tooltip, raw);
 	        field.gsurveyLikertRows[i] = g;
+
+	        if ( '' !== tooltip ) {
+						field.gftt_choicesEnabled = 2; // Hack to force the plugin to load CSS styles for the tooltip.
+					}
 	    });
-	    console.log('field', field);
 	    window.gsurveyLikertUpdateInputs(field);
 		}
   }
