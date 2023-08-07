@@ -1,7 +1,5 @@
-/**
- * 
- */
-
+var gfttflr = gfttflr || {};
+	
 window.onload = (function(onload, $) {
   return function(event) {
     onload && onload(event);
@@ -15,26 +13,24 @@ window.onload = (function(onload, $) {
 		var _gsurveyLikertUpdateRowsObject = window.gsurveyLikertUpdateRowsObject;
 
 		function combineRawTextAndToolTip(raw = '', tooltip = '') {
-			if ( typeof combineRawTextAndToolTip.counter == 'undefined' ) {
-	        combineRawTextAndToolTip.counter = 0;
-	    }
-
 	    if ('' == tooltip ) {
 	    	return raw;
 	    }
 			
-			var id = `gftt-tooltip-${combineRawTextAndToolTip.counter}${Date.now()}${Math.floor(Math.random()*100)}`;
-			var icon = `<i id='${id}' class='gftt-icon gform-theme__no-reset--el' tabindex='0' data-placement='nw-alt'></i>`;
-			var text = `<span class='gftt-content' id='${id}-wrap' role='tooltip' aria-hidden='false'><span id='${id}-content' data-tid='${id}' aria-hidden='false'>${tooltip}</span></span>`;
+			//var id = `gftt-tooltip-${combineRawTextAndToolTip.counter}${Date.now()}${Math.floor(Math.random()*100)}`;
+			//var icon = `<i id='${id}' class='gftt-icon gform-theme__no-reset--el' tabindex='0' data-placement='nw-alt'></i>`;
+			//var text = `<span class='gftt-content' id='${id}-wrap' role='tooltip' aria-hidden='false'><span id='${id}-content' data-tid='${id}' aria-hidden='false'>${tooltip}</span></span>`;
+
+			var icon = `<i class='gftt-icon gfttflr-icon gform-theme__no-reset--el' tabindex='0' data-placement='nw-alt'></i>`;
+			var text = `<span class='gftt-content gfttflr-content' role='tooltip' aria-hidden='false'><span aria-hidden='false'>${tooltip}</span></span>`;
 			
-			combineRawTextAndToolTip.counter++;
 			return `${raw}${icon}${text}`;
 			
 		}
 
 		window.gsurveyLikertGetRows = function(field) {
 			var old_html_string = _gsurveyLikertGetRows(field);
-			
+		
 			var defaultTexts = [
 				'First row',				
 				'Second row',					
@@ -62,8 +58,8 @@ window.onload = (function(onload, $) {
 				var combined = combineRawTextAndToolTip(raw, tooltip);
 
 				var $tooltip   = `<textarea id="tooltip-${index}" class="gform-input gf-tooltips-choice-content-for-likert-rows" placeholder="Tooltip Content" onkeyup="gsurveyLikertUpdateRowsObject(); gsurveyLikertUpdatePreview();">${tooltip}</textarea>`;
-				var $combined  = `<input type='hidden' id='gsurvey-likert-row-hidden-${index}' value="${combined}"  class='gsurvey-row-input gsurvey-likert-row-hidden field-choice-hidden field-choice-hidden--likert' onchange="gsurveyLikertUpdateRowsObject(); gsurveyLikertUpdatePreview();" />`;
-				var $raw       = `<input type='text' id='gsurvey-likert-row-text-${index}' value="${raw}"  class='gsurvey-row-input gsurvey-likert-row-text field-choice-text field-choice-text--likert' onkeyup="gsurveyLikertUpdateRowsObject(); gsurveyLikertUpdatePreview();" />`;
+				var $combined  = `<input type='hidden' id='gsurvey-likert-row-hidden-${index}' value="${_.escape(combined)}"  class='gsurvey-row-input gsurvey-likert-row-hidden field-choice-hidden field-choice-hidden--likert' onchange="gsurveyLikertUpdateRowsObject(); gsurveyLikertUpdatePreview();" />`;
+				var $raw       = `<input type='text' id='gsurvey-likert-row-text-${index}' value="${_.escape(raw)}"  class='gsurvey-row-input gsurvey-likert-row-text field-choice-text field-choice-text--likert' onkeyup="gsurveyLikertUpdateRowsObject(); gsurveyLikertUpdatePreview();" />`;
 
 				$(element)
 					.append($combined)
@@ -89,7 +85,7 @@ window.onload = (function(onload, $) {
 	        var combined = combineRawTextAndToolTip(raw, tooltip, index);	        
 
 	        var i = $(this).data("index");
-	        var g = new window.gsurveyLikertRow(combined, value, tooltip, raw);
+	        var g = new window.gsurveyLikertRow(_.unescape(combined), _.unescape(value), tooltip, _.unescape(raw));
 	        field.gsurveyLikertRows[i] = g;
 
 	        if ( '' !== tooltip ) {
